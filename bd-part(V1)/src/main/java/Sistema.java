@@ -19,13 +19,13 @@ import java.util.Scanner;
 
 public class Sistema extends JFrame implements WindowListener, WindowStateListener {
 
-	String setor;
+	String setor, usuario;
 	float dinheiro, mudar;
 	int width, height, control, qtdPecas, amount, i, amountPecas, j;
-	boolean change, active, isRight, exist;
+	boolean change, active, isRight, exist, logado;
 	JLabel titulo, tituloCaixa, dinheiroCaixa, tituloEstoque;
 	JTextArea nome, preco, quantidade, search;
-    JButton caixa, estoque, adicionarCaixa, removerCaixa, voltarCaixa, procurarPeca, addPeca, voltarEstoque, voltarAdicionar, adicionar, voltarProcurar, procurar;
+    JButton caixa, estoque, adicionarCaixa, removerCaixa, voltarCaixa, procurarPeca, addPeca, voltarEstoque, voltarAdicionar, adicionar, voltarProcurar, procurar, sair;
     JPanel menu, menuCaixa, menuEstoque, adicionarPeca, searchPeca;
     JTabbedPane tabsSearch;
     String nomePeca;
@@ -107,12 +107,13 @@ public class Sistema extends JFrame implements WindowListener, WindowStateListen
 
 	public void menu() {
 
-	    titulo.setBounds((width * 20)/100, (height * 5)/100, (width * 80)/100, (height * 15)/100);
+	    titulo.setBounds((width * 20)/100, (height * 10)/100, (width * 80)/100, (height * 15)/100);
         titulo.setForeground(Color.WHITE);
         titulo.setFont(new Font("TimesRoman", Font.PLAIN, (width * 7)/100));
 
 		caixa.setBounds((width * 25)/100, (height * 35)/100, (width * 50)/100, (height * 10)/100);
 		estoque.setBounds((width * 25)/100, (height * 60)/100, (width * 50)/100, (height * 10)/100);
+		sair.setBounds(0, 0, (width * 20)/100, (height * 10)/100);
 
 		caixa.setBackground(Color.WHITE);
 		caixa.setForeground(Color.BLUE);
@@ -120,13 +121,18 @@ public class Sistema extends JFrame implements WindowListener, WindowStateListen
 		estoque.setBackground(Color.WHITE);
 		estoque.setForeground(Color.BLUE);
 
+		sair.setBackground(Color.WHITE);
+		sair.setForeground(Color.BLUE);
+
 		caixa.setFont(new Font("TimesRoman", Font.PLAIN, (width * 5)/100));
 		estoque.setFont(new Font("TimesRoman", Font.PLAIN, (width * 5)/100));
+		sair.setFont(new Font("TimesRoman", Font.PLAIN, (width * 5)/100));
 
         menu.add(titulo);
         menu.add(caixa);
-        menu.add(estoque);
-
+//        menu.add(estoque);
+        menu.add(sair);
+        
         menu.setLayout(null);
         menu.setBackground(Color.BLACK);
 
@@ -430,12 +436,35 @@ public class Sistema extends JFrame implements WindowListener, WindowStateListen
 
 	public void unload() {
 		dispose();
-	}
+
+		try {
+			fileWriter = new FileWriter("file.txt");
+			
+			if(logado) {
+				if(setor.equals("Eletronica")) fileWriter.write("Breno" + "\n");
+				else if(setor.equals("Eletrica")) fileWriter.write("Luiz" + "\n");
+			} else fileWriter.write("Deslogado" + "\n");
+
+			fileWriter.write(String.valueOf(amount) + "\n");
+
+			for(i = 0; i < amount; i++) {
+				fileWriter.write(pecas.get(i).getNome() + "\n");
+				fileWriter.write(String.valueOf(pecas.get(i).getPreco()) + "\n");
+				fileWriter.write(String.valueOf(pecas.get(i).getQuantidade()) + "\n");
+			}
+
+			fileWriter.close();
+		} catch (IOException exception) {
+			System.out.println("An error occurred.");
+			exception.printStackTrace();
+		}
+}
 
 	public void load() {
 
         active = true;
         change = true;
+        logado = true;
 
         caixaFirebase = new Caixa(setor, crudfirebase);
         
@@ -462,6 +491,7 @@ public class Sistema extends JFrame implements WindowListener, WindowStateListen
 		adicionar = new JButton("Adicionar");
 		voltarProcurar = new JButton("<-");
 		procurar = new JButton("Procurar");
+		sair = new JButton("Sair");
 
         menuCaixa = new JPanel();
         menuEstoque = new JPanel();
@@ -481,6 +511,7 @@ public class Sistema extends JFrame implements WindowListener, WindowStateListen
 			if (file.createNewFile()) {
 				exist = false;
 			} else {
+				
 				exist = true;
 			}
 		} catch (IOException e) {
@@ -492,6 +523,8 @@ public class Sistema extends JFrame implements WindowListener, WindowStateListen
 			try {
 				fileReader = new Scanner(file);
 
+				usuario = fileReader.nextLine();
+								
 				amount = Integer.parseInt(fileReader.nextLine());
 
 				for(i = 0; i < amount; i++) {
@@ -685,6 +718,15 @@ public class Sistema extends JFrame implements WindowListener, WindowStateListen
             }
         });
 
+        sair.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	logado = false;
+            	active = false;
+            }
+        });
+
 	}
 
     public static int getScreenWidth() {
@@ -737,22 +779,6 @@ public class Sistema extends JFrame implements WindowListener, WindowStateListen
     }
     public void windowClosing(WindowEvent e) {
         active = false;
-        
-		try {
-			fileWriter = new FileWriter("file.txt");
-			fileWriter.write(String.valueOf(amount) + "\n");
-
-			for(i = 0; i < amount; i++) {
-				fileWriter.write(pecas.get(i).getNome() + "\n");
-				fileWriter.write(String.valueOf(pecas.get(i).getPreco()) + "\n");
-				fileWriter.write(String.valueOf(pecas.get(i).getQuantidade()) + "\n");
-			}
-
-			fileWriter.close();
-		} catch (IOException exception) {
-			System.out.println("An error occurred.");
-			exception.printStackTrace();
-		}
     }
 
     public void windowOpened(WindowEvent e) {
